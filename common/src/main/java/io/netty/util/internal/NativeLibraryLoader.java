@@ -332,28 +332,28 @@ public final class NativeLibraryLoader {
             return;
         }
         String newId = new String(generateUniqueId(originalName.length()), CharsetUtil.UTF_8);
-        if (!tryExec("install_name_tool -id " + newId + " " + libraryFile.getAbsolutePath())) {
+        if (!tryExec("install_name_tool", "-id", newId, libraryFile.getAbsolutePath())) {
             return;
         }
 
-        tryExec("codesign -s - " + libraryFile.getAbsolutePath());
+        tryExec("codesign", "-s", "-", libraryFile.getAbsolutePath());
     }
 
-    private static boolean tryExec(String cmd) {
+    private static boolean tryExec(String... cmdArray) {
         try {
-            int exitValue = Runtime.getRuntime().exec(cmd).waitFor();
+            int exitValue = new ProcessBuilder(cmdArray).start().waitFor();
             if (exitValue != 0) {
-                logger.debug("Execution of '{}' failed: {}", cmd, exitValue);
+                logger.debug("Execution of '{}' failed: {}", Arrays.toString(cmdArray), exitValue);
                 return false;
             }
-            logger.debug("Execution of '{}' succeed: {}", cmd, exitValue);
+            logger.debug("Execution of '{}' succeed: {}", Arrays.toString(cmdArray), exitValue);
             return true;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } catch (IOException e) {
-            logger.info("Execution of '{}' failed.", cmd, e);
+            logger.info("Execution of '{}' failed.", Arrays.toString(cmdArray), e);
         } catch (SecurityException e) {
-            logger.error("Execution of '{}' failed.", cmd, e);
+            logger.error("Execution of '{}' failed.", Arrays.toString(cmdArray), e);
         }
         return false;
     }
