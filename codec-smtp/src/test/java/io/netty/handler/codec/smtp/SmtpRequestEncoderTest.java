@@ -154,6 +154,49 @@ public class SmtpRequestEncoderTest {
         return writtenString;
     }
 
+    @Test
+    public void testSmtpInjectionProtection() {
+        // Test SMTP injection in mail command with CR
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.mail("test@example.com\rQUIT");
+            }
+        });
+
+        // Test SMTP injection in mail command with LF  
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.mail("test@example.com\nQUIT");
+            }
+        });
+
+        // Test SMTP injection in rcpt command with CRLF
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.rcpt("test@example.com\r\nQUIT");
+            }
+        });
+
+        // Test SMTP injection in helo command
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.helo("localhost\r\nQUIT");
+            }
+        });
+
+        // Test SMTP injection in DefaultSmtpRequest constructor
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                new DefaultSmtpRequest(SmtpCommand.MAIL, "FROM:<test@example.com>\r\nQUIT");
+            }
+        });
+    }
+
     private static void testEncode(SmtpRequest request, String expected) {
         EmbeddedChannel channel = new EmbeddedChannel(new SmtpRequestEncoder());
         assertTrue(channel.writeOutbound(request));
