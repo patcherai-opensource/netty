@@ -154,6 +154,81 @@ public class SmtpRequestEncoderTest {
         return writtenString;
     }
 
+    @Test
+    public void testSmtpInjectionInMailCommand() {
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.mail("user@example.com\r\nDATA\r\nSubject: Injected\r\n");
+            }
+        });
+    }
+
+    @Test
+    public void testSmtpInjectionInRcptCommand() {
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.rcpt("user@example.com\nRSET\r\n");
+            }
+        });
+    }
+
+    @Test
+    public void testSmtpInjectionInMailParameters() {
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.mail("user@example.com", "SIZE=1000\r\nQUIT\r\n");
+            }
+        });
+    }
+
+    @Test
+    public void testSmtpInjectionInRcptParameters() {
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.rcpt("user@example.com", "NOTIFY=SUCCESS\nDATA\r\n");
+            }
+        });
+    }
+
+    @Test
+    public void testSmtpInjectionInHeloCommand() {
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.helo("localhost\r\nMAIL FROM:<attacker@evil.com>\r\n");
+            }
+        });
+    }
+
+    @Test
+    public void testSmtpInjectionInEhloCommand() {
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.ehlo("localhost\nRCPT TO:<victim@example.com>\r\n");
+            }
+        });
+    }
+
+    @Test
+    public void testValidEmailAddressesWork() {
+        // Ensure normal usage still works
+        SmtpRequest mailRequest = SmtpRequests.mail("user@example.com");
+        SmtpRequest rcptRequest = SmtpRequests.rcpt("user@example.com");
+        SmtpRequest heloRequest = SmtpRequests.helo("localhost");
+        SmtpRequest ehloRequest = SmtpRequests.ehlo("localhost");
+        
+        // Test encoding to make sure nothing breaks
+        testEncode(mailRequest, "MAIL FROM:<user@example.com>\r\n");
+        testEncode(rcptRequest, "RCPT TO:<user@example.com>\r\n");
+        testEncode(heloRequest, "HELO localhost\r\n");
+        testEncode(ehloRequest, "EHLO localhost\r\n");
+    }
+
     private static void testEncode(SmtpRequest request, String expected) {
         EmbeddedChannel channel = new EmbeddedChannel(new SmtpRequestEncoder());
         assertTrue(channel.writeOutbound(request));

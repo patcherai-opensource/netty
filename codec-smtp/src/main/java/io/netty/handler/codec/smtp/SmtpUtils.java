@@ -15,6 +15,8 @@
  */
 package io.netty.handler.codec.smtp;
 
+import io.netty.util.internal.ObjectUtil;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -25,7 +27,29 @@ final class SmtpUtils {
         if (sequences == null || sequences.length == 0) {
             return Collections.emptyList();
         }
+        validateSmtpParameters(sequences);
         return Collections.unmodifiableList(Arrays.asList(sequences));
+    }
+
+    /**
+     * Validates SMTP parameters to prevent SMTP command injection.
+     * 
+     * @param parameters the parameters to validate
+     * @throws IllegalArgumentException if any parameter contains CR or LF characters
+     */
+    static void validateSmtpParameters(CharSequence... parameters) {
+        ObjectUtil.checkNotNull(parameters, "parameters");
+        for (CharSequence parameter : parameters) {
+            if (parameter != null) {
+                for (int i = 0; i < parameter.length(); i++) {
+                    char c = parameter.charAt(i);
+                    if (c == '\r' || c == '\n') {
+                        throw new IllegalArgumentException(
+                                "SMTP parameter must not contain CR or LF characters: " + parameter);
+                    }
+                }
+            }
+        }
     }
 
     private SmtpUtils() { }
