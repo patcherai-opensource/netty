@@ -103,6 +103,9 @@ public final class SmtpRequests {
      * Creates a {@code MAIL} request.
      */
     public static SmtpRequest mail(CharSequence sender, CharSequence... mailParameters) {
+        if (sender != null) {
+            SmtpUtils.validateSmtpParameters(sender);
+        }
         if (mailParameters == null || mailParameters.length == 0) {
             return new DefaultSmtpRequest(SmtpCommand.MAIL,
                                           sender != null ? "FROM:<" + sender + '>' : FROM_NULL_SENDER);
@@ -119,6 +122,7 @@ public final class SmtpRequests {
      */
     public static SmtpRequest rcpt(CharSequence recipient, CharSequence... rcptParameters) {
         ObjectUtil.checkNotNull(recipient, "recipient");
+        SmtpUtils.validateSmtpParameters(recipient);
         if (rcptParameters == null || rcptParameters.length == 0) {
             return new DefaultSmtpRequest(SmtpCommand.RCPT, "TO:<" + recipient + '>');
         } else {
