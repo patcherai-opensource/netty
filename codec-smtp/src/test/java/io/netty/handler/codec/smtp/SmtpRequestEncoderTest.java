@@ -136,6 +136,56 @@ public class SmtpRequestEncoderTest {
         assertEquals("DATA\r\nRSET\r\nNOOP\r\n", getWrittenString(channel));
     }
 
+    @Test
+    public void testMailWithCRLFThrowsException() {
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.mail("test@example.com\r\nQUIT");
+            }
+        });
+    }
+
+    @Test
+    public void testRcptWithCRLFThrowsException() {
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.rcpt("test@example.com\nHELP");
+            }
+        });
+    }
+
+    @Test
+    public void testMailParameterWithCRThrowsException() {
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.mail("test@example.com", "SIZE=1000\rQUIT");
+            }
+        });
+    }
+
+    @Test
+    public void testRcptParameterWithLFThrowsException() {
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.rcpt("test@example.com", "NOTIFY=SUCCESS\nDATA");
+            }
+        });
+    }
+
+    @Test
+    public void testDefaultSmtpRequestWithCRLFThrowsException() {
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                new DefaultSmtpRequest(SmtpCommand.HELO, "localhost\r\nQUIT");
+            }
+        });
+    }
+
     private static String getWrittenString(EmbeddedChannel channel) {
         ByteBuf written = Unpooled.buffer();
 

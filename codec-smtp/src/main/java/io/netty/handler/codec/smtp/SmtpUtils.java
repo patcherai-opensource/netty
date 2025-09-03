@@ -25,7 +25,22 @@ final class SmtpUtils {
         if (sequences == null || sequences.length == 0) {
             return Collections.emptyList();
         }
+        validateSMTPParameters(Arrays.asList(sequences));
         return Collections.unmodifiableList(Arrays.asList(sequences));
+    }
+
+    static void validateSMTPParameters(List<CharSequence> parameters) {
+        if (parameters != null) {
+            for (CharSequence parameter : parameters) {
+                if (parameter != null) {
+                    String paramStr = parameter.toString();
+                    if (paramStr.indexOf('\r') != -1 || paramStr.indexOf('\n') != -1) {
+                        throw new IllegalArgumentException(
+                                "SMTP parameter must not contain CR or LF characters: " + parameter);
+                    }
+                }
+            }
+        }
     }
 
     private SmtpUtils() { }
