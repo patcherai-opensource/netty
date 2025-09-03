@@ -28,5 +28,40 @@ final class SmtpUtils {
         return Collections.unmodifiableList(Arrays.asList(sequences));
     }
 
+    /**
+     * Validates SMTP parameters to prevent SMTP command injection.
+     * Throws IllegalArgumentException if any parameter contains CRLF sequences.
+     */
+    static void validateSMTPParameters(CharSequence... parameters) {
+        if (parameters != null) {
+            for (CharSequence parameter : parameters) {
+                if (parameter != null) {
+                    validateSMTPParameter(parameter);
+                }
+            }
+        }
+    }
+
+    /**
+     * Validates SMTP parameters to prevent SMTP command injection.
+     * Throws IllegalArgumentException if any parameter contains CRLF sequences.
+     */
+    static void validateSMTPParameters(List<CharSequence> parameters) {
+        if (parameters != null) {
+            for (CharSequence parameter : parameters) {
+                if (parameter != null) {
+                    validateSMTPParameter(parameter);
+                }
+            }
+        }
+    }
+
+    private static void validateSMTPParameter(CharSequence parameter) {
+        String paramStr = parameter.toString();
+        if (paramStr.contains("\r") || paramStr.contains("\n")) {
+            throw new IllegalArgumentException("SMTP parameter contains CRLF characters: " + parameter);
+        }
+    }
+
     private SmtpUtils() { }
 }

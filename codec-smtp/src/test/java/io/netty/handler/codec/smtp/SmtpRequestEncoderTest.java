@@ -163,4 +163,54 @@ public class SmtpRequestEncoderTest {
         buffer.release();
         assertNull(channel.readOutbound());
     }
+
+    @Test
+    public void testSmtpInjectionWithCarriageReturn() {
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.mail("test@example.com\rQUIT");
+            }
+        });
+    }
+
+    @Test
+    public void testSmtpInjectionWithLineFeed() {
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.mail("test@example.com\nQUIT");
+            }
+        });
+    }
+
+    @Test
+    public void testSmtpInjectionWithCRLF() {
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.rcpt("test@example.com\r\nQUIT");
+            }
+        });
+    }
+
+    @Test
+    public void testSmtpInjectionInAuthParameter() {
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.auth("PLAIN", "dGVzdA\rQUIT");
+            }
+        });
+    }
+
+    @Test
+    public void testSmtpInjectionInHelo() {
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.helo("localhost\r\nQUIT");
+            }
+        });
+    }
 }
