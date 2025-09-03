@@ -154,6 +154,66 @@ public class SmtpRequestEncoderTest {
         return writtenString;
     }
 
+    @Test
+    public void testMailWithCrlfInjection() {
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.mail("user@example.com\r\nQUIT");
+            }
+        });
+    }
+
+    @Test
+    public void testRcptWithCrlfInjection() {
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.rcpt("user@example.com\nDATA\r\n");
+            }
+        });
+    }
+
+    @Test
+    public void testHeloWithCrlfInjection() {
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.helo("example.com\r\nMAIL FROM:<attacker@evil.com>");
+            }
+        });
+    }
+
+    @Test
+    public void testEhloWithCrlfInjection() {
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.ehlo("example.com\nRSET\r\n");
+            }
+        });
+    }
+
+    @Test
+    public void testAuthWithCrlfInjection() {
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                SmtpRequests.auth("LOGIN\r\nQUIT");
+            }
+        });
+    }
+
+    @Test
+    public void testDefaultSmtpRequestWithCrlfInjection() {
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() {
+                new DefaultSmtpRequest(SmtpCommand.HELO, "example.com\r\nDATA");
+            }
+        });
+    }
+
     private static void testEncode(SmtpRequest request, String expected) {
         EmbeddedChannel channel = new EmbeddedChannel(new SmtpRequestEncoder());
         assertTrue(channel.writeOutbound(request));

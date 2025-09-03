@@ -25,7 +25,47 @@ final class SmtpUtils {
         if (sequences == null || sequences.length == 0) {
             return Collections.emptyList();
         }
+        validateSmtpParameters(sequences);
         return Collections.unmodifiableList(Arrays.asList(sequences));
+    }
+
+    static List<CharSequence> toUnmodifiableList(List<CharSequence> sequences) {
+        if (sequences == null || sequences.isEmpty()) {
+            return Collections.emptyList();
+        }
+        validateSmtpParameters(sequences);
+        return Collections.unmodifiableList(sequences);
+    }
+
+    static void validateSmtpParameters(CharSequence... parameters) {
+        if (parameters == null) {
+            return;
+        }
+        for (CharSequence parameter : parameters) {
+            validateSmtpParameter(parameter);
+        }
+    }
+
+    static void validateSmtpParameters(List<CharSequence> parameters) {
+        if (parameters == null) {
+            return;
+        }
+        for (CharSequence parameter : parameters) {
+            validateSmtpParameter(parameter);
+        }
+    }
+
+    private static void validateSmtpParameter(CharSequence parameter) {
+        if (parameter == null) {
+            return;
+        }
+        int length = parameter.length();
+        for (int i = 0; i < length; i++) {
+            char c = parameter.charAt(i);
+            if (c == '\r' || c == '\n') {
+                throw new IllegalArgumentException("SMTP parameter contains invalid characters (CR/LF): " + parameter);
+            }
+        }
     }
 
     private SmtpUtils() { }
