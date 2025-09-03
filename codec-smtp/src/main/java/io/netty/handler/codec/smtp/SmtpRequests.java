@@ -37,6 +37,26 @@ public final class SmtpRequests {
     private static final AsciiString FROM_NULL_SENDER = AsciiString.cached("FROM:<>");
 
     /**
+     * Validates an email address to prevent SMTP command injection.
+     * @param email the email address to validate
+     * @return the validated email address as a String, or null if input was null
+     * @throws IllegalArgumentException if the email contains invalid characters
+     */
+    private static String validateEmailAddress(CharSequence email) {
+        if (email == null) {
+            return null;
+        }
+        
+        String emailStr = email.toString();
+        // Check for CRLF or other command injection characters
+        if (emailStr.contains("\r") || emailStr.contains("\n") || 
+            emailStr.contains(">") || emailStr.contains("<")) {
+            throw new IllegalArgumentException("Email address contains invalid characters");
+        }
+        return emailStr;
+    }
+
+    /**
      * Creates a {@code HELO} request.
      */
     public static SmtpRequest helo(CharSequence hostname) {
@@ -103,12 +123,13 @@ public final class SmtpRequests {
      * Creates a {@code MAIL} request.
      */
     public static SmtpRequest mail(CharSequence sender, CharSequence... mailParameters) {
+        String validatedSender = validateEmailAddress(sender);
         if (mailParameters == null || mailParameters.length == 0) {
             return new DefaultSmtpRequest(SmtpCommand.MAIL,
-                                          sender != null ? "FROM:<" + sender + '>' : FROM_NULL_SENDER);
+                                          validatedSender != null ? "FROM:<" + validatedSender + '>' : FROM_NULL_SENDER);
         } else {
             List<CharSequence> params = new ArrayList<CharSequence>(mailParameters.length + 1);
-            params.add(sender != null? "FROM:<" + sender + '>' : FROM_NULL_SENDER);
+            params.add(validatedSender != null ? "FROM:<" + validatedSender + '>' : FROM_NULL_SENDER);
             Collections.addAll(params, mailParameters);
             return new DefaultSmtpRequest(SmtpCommand.MAIL, params);
         }
@@ -119,11 +140,12 @@ public final class SmtpRequests {
      */
     public static SmtpRequest rcpt(CharSequence recipient, CharSequence... rcptParameters) {
         ObjectUtil.checkNotNull(recipient, "recipient");
+        String validatedRecipient = validateEmailAddress(recipient);
         if (rcptParameters == null || rcptParameters.length == 0) {
-            return new DefaultSmtpRequest(SmtpCommand.RCPT, "TO:<" + recipient + '>');
+            return new DefaultSmtpRequest(SmtpCommand.RCPT, "TO:<" + validatedRecipient + '>');
         } else {
             List<CharSequence> params = new ArrayList<CharSequence>(rcptParameters.length + 1);
-            params.add("TO:<" + recipient + '>');
+            params.add("TO:<" + validatedRecipient + '>');
             Collections.addAll(params, rcptParameters);
             return new DefaultSmtpRequest(SmtpCommand.RCPT, params);
         }
