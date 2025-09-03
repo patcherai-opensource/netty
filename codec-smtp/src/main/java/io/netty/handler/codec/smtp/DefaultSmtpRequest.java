@@ -51,11 +51,11 @@ public final class DefaultSmtpRequest implements SmtpRequest {
      * Creates a new instance with the given command and parameters.
      */
     public DefaultSmtpRequest(CharSequence command, CharSequence... parameters) {
-        SmtpUtils.validateSMTPParameters(parameters);
         this(SmtpCommand.valueOf(command), parameters);
     }
 
     DefaultSmtpRequest(SmtpCommand command, List<CharSequence> parameters) {
+        SmtpUtils.validateSMTPParameters(parameters);
         this.command = ObjectUtil.checkNotNull(command, "command");
         this.parameters = parameters != null ?
                 Collections.unmodifiableList(parameters) : Collections.<CharSequence>emptyList();
